@@ -74,5 +74,3 @@ monitoring reports to identify trends, causes, and policy impacts.
   pollution levels
 
 ---
-
-## Repository structure
