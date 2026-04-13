@@ -1,4 +1,4 @@
-Bangalore Air Quality Analysis (2000–2025)
+## Bangalore Air Quality Analysis (2000–2025)
 
 A 25-year analysis of urban air pollution in Bangalore, India, combining 
 ground-station sensor data, NASA satellite reanalysis, and government 
