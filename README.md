@@ -1,75 +1,106 @@
-# Bangalore Air Quality Analysis and Dashboard
+# Bangalore Air Quality Analysis (2000–2025)
 
-A 25-year analysis of urban air pollution in Bangalore, India, combining
-ground-station sensor data, NASA satellite reanalysis, government monitoring
-reports, and vehicle registration data.
+A 25-year analysis of urban air pollution in Bangalore, India, combining 
+ground-station sensor data, NASA satellite reanalysis, and government 
+monitoring reports to identify trends, causes, and policy impacts.
 
-The project now includes an interactive Streamlit dashboard for exploring
-pollutant trends, data coverage, policy milestones, and vehicle-growth
-relationships.
+---
 
-## Dashboard
+## Key findings
 
-Run the dashboard locally:
+- **PM2.5 is declining** — a downward trend from ~40 µg/m³ (2018) to a 
+  projected ~20 µg/m³ (95% CI: 12–28) by 2028, but remains 2× above 
+  the WHO annual guideline of 15 µg/m³
+- **PM10 shows a large drop coinciding with BS-IV (2017)** — the ITS 
+  model estimates a −65.8 µg/m³ level change at 2017, though this does 
+  not reach statistical significance (p=0.076, n=11) and should be 
+  treated as exploratory
+- **Vehicle growth paradox** — registered vehicles grew 3× (2012–2024) 
+  yet PM10 fell 52% over the same period (r=−0.87, n=12); note both 
+  series share a common time trend and causation cannot be inferred 
+  from this correlation alone
+- **Monsoon drives a 90% seasonal swing** — PM2.5 peaks in March (+47%) 
+  and troughs in July (−43%), meaning weather explains nearly half of 
+  year-to-year variation
+- **NO₂ shows no significant policy response** — consistent with traffic 
+  volume growth offsetting per-vehicle emission reductions
 
-```bash
-pip install -r requirements.txt
-streamlit run dashboard.py
-```
+---
 
-The dashboard uses `data/bangalore_master.csv` by default. You can also upload
-a newer `bangalore_master.csv` from Colab using the sidebar uploader.
-
-## Project Files
-
-| File | Purpose |
-| --- | --- |
-| `dashboard.py` | Interactive Streamlit dashboard |
-| `data/bangalore_master.csv` | Master annual dataset used by the dashboard |
-| `01_openaq_fetch.ipynb` | Fetches and cleans OpenAQ station data |
-| `02_merra2_fetch.ipynb` | Fetches MERRA-2 data and builds the master dataset |
-| `03_analysis.ipynb` | Runs trend, forecasting, vehicle, and policy analysis |
-| `05_summary_figure.png` | Static summary figure from the analysis notebook |
-
-## Key Findings
-
-- PM2.5 declines from the 2018 peak but remains above the WHO annual guideline.
-- PM10 falls sharply after the BS-VI fuel-policy period.
-- Vehicle registrations rise strongly while PM10 falls, suggesting cleaner
-  emissions partly offset vehicle growth.
-- PM2.5 has a strong seasonal pattern, with higher values before monsoon and
-  lower values during monsoon.
-- SO2 is useful descriptively, but cross-source consistency is limited before
-  OpenAQ coverage.
-
-## Data Sources
-
-| Source | Coverage | Pollutants / Variables | Access |
-| --- | --- | --- | --- |
-| OpenAQ API / CPCB stations | 2018-2025 | PM2.5, PM10, NO2, SO2, O3, CO | Free API |
-| NASA MERRA-2 | 2000-2025 | SO2 proxy | Earthdata account |
-| KSPCB annual reports | 2012-2017 | PM10, NO2, SO2 | PDF extraction / manual entry |
-| VAHAN registry | 2005-2024 | Registered vehicles | Portal download / manual entry |
-
-## Known Limitations
-
-- 2023-2024 CPCB/OpenAQ gaps are interpolated for PM2.5 and flagged in the
-  dataset.
-- 2018 PM10 is interpolated and flagged in the dataset.
-- MERRA-2 PM2.5 was rejected as unreliable for Bangalore in the notebook
-  analysis.
-- SO2 comes from multiple sources and should not be treated as perfectly
-  comparable across the full 2000-2025 period.
-
-## Method Summary
-
-- OpenAQ hourly readings are cleaned and resampled to annual means.
-- MERRA-2 aerosol data is extracted for a Bangalore bounding box.
-- KSPCB annual-report values are manually consolidated for pre-OpenAQ years.
-- Vehicle-registration data is merged by year.
-- Analysis includes trend tests, correlation, policy-event comparison, and
-  PM2.5 forecasting.
-
-## Summary Figure
+## Summary figure
 
 ![Summary](05_summary_figure.png)
+
+---
+
+## Data sources
+
+| Source | Coverage | Pollutants | Access |
+|--------|----------|------------|--------|
+| OpenAQ API (CPCB stations) | 2018–2025 | PM2.5, PM10, NO₂, SO₂, O₃, CO | Free API |
+| NASA MERRA-2 (M2T1NXAER) | 2000–2025 | SO₂ proxy | Free (Earthdata account) |
+| KSPCB Annual Reports | 2012–2017 | PM10, NO₂, SO₂ | PDF extraction |
+| VAHAN vehicle registry | 2005–2024 | Registered vehicles | Portal download |
+
+---
+
+## Known limitations
+
+| Issue | Detail |
+|-------|--------|
+| 2023–2024 data gap | CPCB stopped reporting to OpenAQ — values interpolated and flagged |
+| MERRA-2 PM2.5 rejected | R²=0.07 against ground truth — unreliable for Bangalore; SO₂ proxy retained (R²=0.66) |
+| ITS underpowered | n=11 annual points, 4 parameters — p-values should be interpreted cautiously |
+| 2014 PM10 outlier | 165 µg/m³ likely inflates the pre-intervention mean and the estimated level change |
+| Ecological fallacy risk | Vehicle-pollution correlation (r=−0.87) reflects shared time trend; not causal |
+| SO₂ cross-source inconsistency | MERRA-2, KSPCB, and OpenAQ values show incompatible baselines — descriptive only |
+| Prophet extrapolation | 3-year forecast beyond training window carries wide uncertainty (95% CI: 12–28 µg/m³) |
+| BS-IV not BS-VI | The 2017 intervention is BS-IV (national rollout April 2017). BS-VI was implemented in April 2020 and is outside this analysis window |
+
+---
+
+## Methodology
+
+### 1. Data pipeline
+
+- **OpenAQ**: Paginated REST API fetch across 8 Bangalore stations 
+  (Peenya, Silk Board, Jayanagar, BTM Layout, Hebbal, Bapuji Nagar, 
+  Hombegowda Nagar, City Railway Station). Hourly readings resampled 
+  to annual means. Years with <40% hourly coverage flagged as unreliable.
+- **MERRA-2**: Monthly NetCDF4 files extracted for Bangalore bounding box 
+  (12.8–13.1°N, 77.5–77.7°E) using `xarray`. Four representative months 
+  per year (Jan, Apr, Jul, Oct) averaged to annual means. Bias-corrected 
+  against OpenAQ overlap years (2018–2022) via linear regression. PM2.5 
+  proxy rejected after validation (R²=0.07).
+- **KSPCB**: Annual mean tables extracted from PDF reports using 
+  `pdfplumber` and OCR (`pytesseract`) for scanned pages.
+- **VAHAN**: Registered vehicle counts by year for Bangalore Urban district.
+
+### 2. Analysis
+
+**Trend analysis**
+- Mann-Kendall test + Sen's slope for monotonic trends across all pollutants
+
+**Forecasting**
+- Facebook Prophet with multiplicative seasonality (Fourier order=3)
+- Trained on monthly PM2.5 data 2018–2022
+- Out-of-sample evaluation on 3 months of early 2026 data
+- Note: 3-year extrapolation to 2028 carries substantial uncertainty
+
+**Causal inference — Interrupted Time Series**
+- Intervention point: BS-IV national rollout, April 2017
+- Model: `pollution = β₀ + β₁·time + β₂·post + β₃·time×post`
+- `post` = 1 from 2017 onwards (immediate level change)
+- `time×post` = slope change after intervention
+- Caveat: n=11 annual points gives very low statistical power; 
+  results are exploratory only
+
+**Correlation analysis**
+- Pearson r between annual vehicle registrations and pollution levels
+- Caveat: both series trend over time; partial correlation 
+  controlling for year would be a more rigorous test
+
+---
+
+## Author
+Data covers Bangalore Urban district, Karnataka, India
